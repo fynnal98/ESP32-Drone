@@ -5,7 +5,7 @@
 ## Software
 The code is structurd in modules:
 
-**main.cpp**  
+**main**  
 - Init: SBUS, IMU, PWM, LED, Battery  
 - Safety: Failsafe, Low-voltage, Arming  
 - Motor mix: Inputs + PID corrections  
