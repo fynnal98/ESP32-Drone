@@ -1,4 +1,9 @@
 # ESP32-Drone
+## Project Images
+
+<img src="https://github.com/user-attachments/assets/cf23a34f-e862-4f0b-bad8-c11b40a29237" width="50%" />
+
+<img src="https://github.com/user-attachments/assets/04512347-8bc8-4630-acfe-72a15ddec1d4" width="50%" /> 
 
 
 ---
@@ -52,5 +57,3 @@ The system is based on an ESP32-C3 Super Mini microcontroller combined with an M
 Remote control signals are received by a serial SBUS input.  
 Four DC brushed motors are controlled by custom motor drivers. Each is build with a Mosfet, pulldown resisitor and a shottky diode. 
 
-## Project Images
-<img src="https://github.com/user-attachments/assets/04512347-8bc8-4630-acfe-72a15ddec1d4" width="50%" /> 
