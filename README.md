@@ -42,7 +42,7 @@ The code is structurd in modules:
 ---
 ## Hardware
 
-**Supported Hardware:  
+Hardware:  
 - ESP32-C3  
 - MPU6050 // MPU6500  
 - SBUS Receiver (serial data from RadioLink remote controller)  
