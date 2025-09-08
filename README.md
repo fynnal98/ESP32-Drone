@@ -1,9 +1,9 @@
 # ESP32-Drone
 ## Project Images
 
-<img src="https://github.com/user-attachments/assets/cf23a34f-e862-4f0b-bad8-c11b40a29237" width="50%" />
+<img src="https://github.com/user-attachments/assets/cf23a34f-e862-4f0b-bad8-c11b40a29237" width="42%" />
 
-<img src="https://github.com/user-attachments/assets/04512347-8bc8-4630-acfe-72a15ddec1d4" width="50%" /> 
+<img src="https://github.com/user-attachments/assets/04512347-8bc8-4630-acfe-72a15ddec1d4" width="40%" /> 
 
 
 ---
