@@ -1,3 +1,4 @@
+// main.cpp
 #include <Arduino.h>
 #include "Config.h"
 #include "SbusReceiver.h"
@@ -9,22 +10,31 @@ SbusReceiver sbus;
 MPU6050 imu;
 FlightController controller(&imu, &sbus);
 
-unsigned long lowBattSince = 0;
-unsigned long lastUpdate = 0;
+static unsigned long lastUpdate = 0;
 
-void setup() {
+static inline void StopAllMotors()
+{
+  ledcWrite(PWM_CH_MOTOR1, 0);
+  ledcWrite(PWM_CH_MOTOR2, 0);
+  ledcWrite(PWM_CH_MOTOR3, 0);
+  ledcWrite(PWM_CH_MOTOR4, 0);
+}
+
+void setup()
+{
   Serial.begin(115200);
+  delay(200);
+  Serial.println("BOOT");
 
   // === SBUS init ===
   sbus.begin();
 
   // === IMU init ===
   imu.begin(IMU_SDA_PIN, IMU_SCL_PIN);
-  if (imu.isConnected()) {
+  if (imu.isConnected())
     Serial.println("IMU verbunden");
-  } else {
+  else
     Serial.println("IMU NICHT gefunden, fliege ohne Stabilisierung");
-  }
 
   // === PWM init ===
   ledcSetup(PWM_CH_MOTOR1, PWM_FREQ, PWM_RES_BITS);
@@ -37,130 +47,121 @@ void setup() {
   ledcAttachPin(PIN_MOTOR3, PWM_CH_MOTOR3);
   ledcAttachPin(PIN_MOTOR4, PWM_CH_MOTOR4);
 
-  // === LED init ===
-  pinMode(PIN_LED_WARNING, OUTPUT);
-  digitalWrite(PIN_LED_WARNING, LOW);
+  StopAllMotors();
 
   lastUpdate = millis();
 }
 
-void loop() {
-  unsigned long now = millis();
-
-  // === Akku-Messung ===
-  int mv = analogReadMilliVolts(PIN_VBAT);     // Millivolt am ADC-Pin
-  float v_adc = mv / 1000.0f;                  // in Volt
-  float v_batt = v_adc * ((VBAT_R1 + VBAT_R2) / VBAT_R2);
-
-
-  if (v_batt < VBAT_WARNING_THRESHOLD) {
-    if (lowBattSince == 0){
-      lowBattSince = now;
-    }
-    if (now - lowBattSince > VBatt_WARNING_Timeout) {
-      digitalWrite(PIN_LED_WARNING, HIGH);
-    }
-  } else {
-    lowBattSince = 0;
-    digitalWrite(PIN_LED_WARNING, LOW);
-  }
+void loop()
+{
+  const unsigned long now = millis();
 
   // === Timing ===
   float dt = (now - lastUpdate) / 1000.0f;
   lastUpdate = now;
-  if (dt <= 0.0f || dt > 0.5f) {
-    dt = 0.01f; // Fallback 10ms
-  }
+  if (dt <= 0.0f || dt > 0.5f)
+    dt = 0.01f;
 
   // === SBUS update ===
   sbus.update();
-  if (sbus.isSignalLost()) {
-    ledcWrite(PWM_CH_MOTOR1, 0);
-    ledcWrite(PWM_CH_MOTOR2, 0);
-    ledcWrite(PWM_CH_MOTOR3, 0);
-    ledcWrite(PWM_CH_MOTOR4, 0);
-    Serial.println("SBUS FAILSAFE aktiv");
-      // LED blinkt alle 300 ms (ca. 2 Hz)
-    if ((millis() / 300) % 2 == 0) {
-      digitalWrite(PIN_LED_WARNING, HIGH);
-    } else {
-      digitalWrite(PIN_LED_WARNING, LOW);
+  if (sbus.isSignalLost())
+  {
+    StopAllMotors();
+
+    static unsigned long lastMsg = 0;
+    if (now - lastMsg > 300)
+    {
+      lastMsg = now;
+      Serial.println("SBUS FAILSAFE aktiv");
     }
+
     delay(10);
     return;
-  } else {
-    digitalWrite(PIN_LED_WARNING, LOW);
   }
 
-  // === Steuerwerte vom Sender ===
-  float baseThrottle = sbus.getThrottle();
-  float pitchRaw     = sbus.getPitch();
-  float rollRaw      = sbus.getRoll();
-  float yawOut       = sbus.getYaw();
+  // === ARM Status ===
+  const bool armed = sbus.isArmedSwitchOn();
 
-  float pitchCorr = 0;
-  float rollCorr  = 0;
+  // === Steuerwerte vom Sender ===
+  float throttle = sbus.getThrottle(); // 0..1
+  float pitchRaw = sbus.getPitch();    // -1..1
+  float rollRaw  = sbus.getRoll();     // -1..1
+  float yawRaw   = sbus.getYaw();      // -1..1
+
+  // Optional: Idle nur wenn armed und throttle > 0
+#if defined(IDLE_THROTTLE)
+  if (armed && throttle > 0.05f && throttle < IDLE_THROTTLE)
+    throttle = IDLE_THROTTLE;
+#endif
+
+  float pitchCorr = 0.0f;
+  float rollCorr  = 0.0f;
 
   // === IMU-Korrekturen ===
-  if (imu.isConnected()) {
+  if (imu.isConnected())
+  {
     imu.update();
     controller.update(dt);
 
     pitchCorr = controller.getMotorPitchOutput();
     rollCorr  = controller.getMotorRollOutput();
 
-    // Schutz vor NaN/Inf
-    if (isnan(pitchCorr) || isinf(pitchCorr)) pitchCorr = 0;
-    if (isnan(rollCorr)  || isinf(rollCorr))  rollCorr  = 0;
+    if (isnan(pitchCorr) || isinf(pitchCorr)) pitchCorr = 0.0f;
+    if (isnan(rollCorr)  || isinf(rollCorr))  rollCorr  = 0.0f;
 
-    // Serial.printf("IMU: Roll=%.2f Pitch=%.2f\n", imu.getRoll(), imu.getPitch());
+#if defined(PID_CORRECTION_LIMIT)
+    pitchCorr = constrain(pitchCorr, -PID_CORRECTION_LIMIT, PID_CORRECTION_LIMIT);
+    rollCorr  = constrain(rollCorr,  -PID_CORRECTION_LIMIT, PID_CORRECTION_LIMIT);
+#endif
   }
 
-  // === Mixer ===
-  float pitchOut = pitchRaw - CORRECTION_BLEND_FACTOR * pitchCorr;
-  float rollOut  = rollRaw  - CORRECTION_BLEND_FACTOR * rollCorr;
+  // === Mixer (Stick + Stabilisierung) ===
+  const float pitchOut = pitchRaw - (CORRECTION_BLEND_FACTOR * pitchCorr);
+  const float rollOut  = rollRaw  - (CORRECTION_BLEND_FACTOR * rollCorr);
+  const float yawOut   = yawRaw;
 
+  float m1 = throttle + pitchOut + rollOut - yawOut;
+  float m2 = throttle + pitchOut - rollOut + yawOut;
+  float m3 = throttle - pitchOut - rollOut - yawOut;
+  float m4 = throttle - pitchOut + rollOut + yawOut;
 
-  float m1 = baseThrottle + pitchOut + rollOut - yawOut;
-  float m2 = baseThrottle + pitchOut - rollOut + yawOut;
-  float m3 = baseThrottle - pitchOut - rollOut - yawOut;
-  float m4 = baseThrottle - pitchOut + rollOut + yawOut;
+  // Motorwerte 0..1 begrenzen (wichtig vor PWM)
+  m1 = constrain(m1, 0.0f, 1.0f);
+  m2 = constrain(m2, 0.0f, 1.0f);
+  m3 = constrain(m3, 0.0f, 1.0f);
+  m4 = constrain(m4, 0.0f, 1.0f);
 
-  int pwm1 = constrain((int)(m1 * PWM_MAX_VALUE), 0, PWM_MAX_VALUE);
-  int pwm2 = constrain((int)(m2 * PWM_MAX_VALUE), 0, PWM_MAX_VALUE);
-  int pwm3 = constrain((int)(m3 * PWM_MAX_VALUE), 0, PWM_MAX_VALUE);
-  int pwm4 = constrain((int)(m4 * PWM_MAX_VALUE), 0, PWM_MAX_VALUE);
+  const int pwm1 = (int)(m1 * PWM_MAX_VALUE);
+  const int pwm2 = (int)(m2 * PWM_MAX_VALUE);
+  const int pwm3 = (int)(m3 * PWM_MAX_VALUE);
+  const int pwm4 = (int)(m4 * PWM_MAX_VALUE);
 
   // === Motoren nur wenn ARM ===
-  bool armed = sbus.isArmedSwitchOn();
-  if (armed) {
+  if (armed)
+  {
     ledcWrite(PWM_CH_MOTOR1, pwm1);
     ledcWrite(PWM_CH_MOTOR2, pwm2);
     ledcWrite(PWM_CH_MOTOR3, pwm3);
     ledcWrite(PWM_CH_MOTOR4, pwm4);
-  } else {
-    ledcWrite(PWM_CH_MOTOR1, 0);
-    ledcWrite(PWM_CH_MOTOR2, 0);
-    ledcWrite(PWM_CH_MOTOR3, 0);
-    ledcWrite(PWM_CH_MOTOR4, 0);
+  }
+  else
+  {
+    StopAllMotors();
   }
 
-  // === Statusausgabe ===
-  // Serial.printf("BAT: %.2f V | ARMED: %s | PWM: [%4d %4d %4d %4d]  IMU: %s\n",
-  //               v_batt,
-  //               armed ? "JA" : "NEIN",
-  //               pwm1, pwm2, pwm3, pwm4,
-  //               imu.isConnected() ? "OK" : "FEHLT");
+  // optional: Debug selten
+  /*
+  static unsigned long lastPrint = 0;
+  if (now - lastPrint > 200) {
+    lastPrint = now;
+    Serial.print("armed="); Serial.print((int)armed);
+    Serial.print(" thr=");  Serial.print(throttle, 2);
+    Serial.print(" roll="); Serial.print(imu.getRoll(), 3);
+    Serial.print(" pitch=");Serial.print(imu.getPitch(), 3);
+    Serial.print(" pc=");   Serial.print(pitchCorr, 3);
+    Serial.print(" rc=");   Serial.println(rollCorr, 3);
+  }
+  */
 
-  // Serial.printf("Roll=%.2f Pitch=%.2f Yaw=%.2f\n",
-  //             sbus.getRoll(), sbus.getPitch(), sbus.getYaw());
-
-
-  Serial.printf("RAW: CH1=%d CH2=%d CH3=%d CH4=%d\n",
-                (int)sbus.getRawChannel(0),
-                (int)sbus.getRawChannel(1),
-                (int)sbus.getRawChannel(2),
-                (int)sbus.getRawChannel(3));
-
-  delay(10); 
+  delay(10);
 }
