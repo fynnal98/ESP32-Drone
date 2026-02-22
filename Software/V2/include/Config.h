@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 // === Boot / Calibration Timing ===
-static constexpr uint32_t BOOT_WAIT_MS = 6000;        // Zeit zum Hinlegen nach Akku
+static constexpr uint32_t BOOT_WAIT_MS = 3000;        // Zeit zum Hinlegen nach Akku
 static constexpr uint32_t LEVEL_CAL_MS = 1500;        // Dauer Level-Mittelung
 
 /* =========================
@@ -62,7 +62,7 @@ static constexpr float DT_MIN = 1.0f / 2000.0f;
 static constexpr float DT_MAX = 1.0f / 50.0f;
 
 /* Stabilize */
-static constexpr float MAX_ANGLE_DEG = 35.0f;
+static constexpr float MAX_ANGLE_DEG = 20.0f;
 
 /* Rate limits */
 static constexpr float MAX_RATE_ROLL_DPS  = 350.0f;
@@ -77,6 +77,7 @@ static constexpr float THROTTLE_MAX     = 0.95f; // headroom fürs Mixing
 
 /* Mixer option */
 static constexpr bool MIX_SWAP_FRONT_BACK = false;
+
 
 // =========================
 // PID Config (tunable)
@@ -108,9 +109,12 @@ static constexpr FcConfig FC_CFG = {
   /* anglePitch */ { 4.5f, 0.0f, 0.06f, 40.0f, 220.0f },
 
                  /* { kp   , ki   , kd     , iLimit, outLimit } */
-  /* rateRoll   */ { 0.3f, 0.10f, 0.0012f, 0.90f, 1.60f },
-  /* ratePitch  */ { 0.3f, 0.10f, 0.0012f, 0.90f, 1.60f },
+  /* rateRoll   */ { 0.25f, 0.10f, 0.0012f, 0.90f, 1.60f },
+  /* ratePitch  */ { 0.25f, 0.10f, 0.0012f, 0.90f, 1.60f },
   /* rateYaw    */ { 0.08f, 0.05f, 0.0000f, 0.40f, 0.80f },
 
   /* corrRampFullAtThr */ 0.06f
 };
+
+
+static constexpr float MOTOR_ROLL_TRIM = -0.30f;

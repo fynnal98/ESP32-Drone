@@ -119,6 +119,9 @@ MotorOutputs FlightController::update(SbusReceiver &rc,
     rollCorr  *= corrScale;
     pitchCorr *= corrScale;
     yawCorr   *= corrScale;
+    
+    rollCorr += MOTOR_ROLL_TRIM;
+
 
     // QUADX Mixer:
     // (m1..m4 sind "normalized motor commands" 0..1 nach clamp)
