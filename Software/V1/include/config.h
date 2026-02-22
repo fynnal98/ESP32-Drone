@@ -11,9 +11,9 @@
 #define SBUS_INPUT_MIN 307
 #define SBUS_INPUT_MAX 1693
 #define SBUS_DEADBAND 0.03f
-#define ROLL_SCALE   0.3f
-#define PITCH_SCALE  0.3f
-#define YAW_SCALE    0.3f
+#define ROLL_SCALE   0.2f
+#define PITCH_SCALE  0.2f
+#define YAW_SCALE    0.2f
 #define THROTTLE_SCALE  1.00f
 #define IDLE_THROTTLE 0.08f
 
@@ -43,6 +43,8 @@
 #define CORRECTION_BLEND_FACTOR  0.2f
 #define MPU_COMPLEMENTARY_ALPHA 0.98f
 #define GYRO_LPF_ALPHA 0.7f
+#define IMU_GYRO_CALIB_SAMPLES  300
+#define IMU_GYRO_CALIB_DELAY_MS 2
 
 
 // === PID Parameter ===

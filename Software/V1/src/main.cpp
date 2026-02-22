@@ -36,6 +36,12 @@ void setup()
   else
     Serial.println("IMU NICHT gefunden, fliege ohne Stabilisierung");
 
+  if (imu.isConnected()) {
+  Serial.println("Gyro calib... don't move");
+  imu.calibrateGyro();
+  Serial.println("Gyro calib done");
+  }  
+
   // === PWM init ===
   ledcSetup(PWM_CH_MOTOR1, PWM_FREQ, PWM_RES_BITS);
   ledcSetup(PWM_CH_MOTOR2, PWM_FREQ, PWM_RES_BITS);
