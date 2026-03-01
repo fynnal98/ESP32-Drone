@@ -11,9 +11,9 @@
 #define SBUS_INPUT_MIN 307
 #define SBUS_INPUT_MAX 1693
 #define SBUS_DEADBAND 0.03f
-#define ROLL_SCALE   0.2f
-#define PITCH_SCALE  0.2f
-#define YAW_SCALE    0.2f
+#define ROLL_SCALE   0.1f
+#define PITCH_SCALE  0.1f
+#define YAW_SCALE    0.1f
 #define THROTTLE_SCALE  1.00f
 #define IDLE_THROTTLE 0.08f
 
@@ -40,7 +40,7 @@
 #define IMU_OFFSET_Z   0.000f
 #define IMU_SDA_PIN      6
 #define IMU_SCL_PIN      7
-#define CORRECTION_BLEND_FACTOR  0.2f
+#define CORRECTION_BLEND_FACTOR  1.0f
 #define MPU_COMPLEMENTARY_ALPHA 0.98f
 #define GYRO_LPF_ALPHA 0.7f
 #define IMU_GYRO_CALIB_SAMPLES  300
@@ -51,13 +51,13 @@
 
 #define PID_CORRECTION_LIMIT 0.5f
  
-#define PID_ROLL_KP   0.8f
-#define PID_ROLL_KI   0.03f
-#define PID_ROLL_KD   0.02f
+#define PID_ROLL_KP   0.2f
+#define PID_ROLL_KI   0.0f
+#define PID_ROLL_KD   0.0f
 
-#define PID_PITCH_KP  0.8f
-#define PID_PITCH_KI  0.03f
-#define PID_PITCH_KD  0.02f
+#define PID_PITCH_KP  0.2f
+#define PID_PITCH_KI  0.0f
+#define PID_PITCH_KD  0.0f
 
 
 

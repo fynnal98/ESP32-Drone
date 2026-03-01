@@ -62,7 +62,7 @@ static constexpr float DT_MIN = 1.0f / 2000.0f;
 static constexpr float DT_MAX = 1.0f / 50.0f;
 
 /* Stabilize */
-static constexpr float MAX_ANGLE_DEG = 20.0f;
+static constexpr float MAX_ANGLE_DEG = 15.0f;
 
 /* Rate limits */
 static constexpr float MAX_RATE_ROLL_DPS  = 350.0f;
@@ -71,8 +71,8 @@ static constexpr float MAX_RATE_YAW_DPS   = 220.0f;
 
 /* Safety */
 static constexpr float THROTTLE_MIN_ARM = 0.02f; // arm nur bei low throttle
-static constexpr float THR_CUTOFF       = 0.02f; // darunter: motor off + pid reset
-static constexpr float THROTTLE_IDLE    = 0.10f; // erst aktiv wenn thr > cutoff
+static constexpr float THR_CUTOFF       = 0.01f; // darunter: motor off + pid reset
+static constexpr float THROTTLE_IDLE    = 0.050f; // erst aktiv wenn thr > cutoff
 static constexpr float THROTTLE_MAX     = 0.95f; // headroom fürs Mixing
 
 /* Mixer option */
@@ -105,16 +105,16 @@ struct FcConfig {
 };
 
 static constexpr FcConfig FC_CFG = {
-  /* angleRoll  */ { 4.5f, 0.0f, 0.06f, 40.0f, 220.0f },
-  /* anglePitch */ { 4.5f, 0.0f, 0.06f, 40.0f, 220.0f },
+  /* angleRoll  */ { 5.5f, 0.0f, 0.06f, 40.0f, 220.0f },
+  /* anglePitch */ { 5.5f, 0.0f, 0.06f, 40.0f, 220.0f },
 
                  /* { kp   , ki   , kd     , iLimit, outLimit } */
-  /* rateRoll   */ { 0.25f, 0.10f, 0.0012f, 0.90f, 1.60f },
-  /* ratePitch  */ { 0.25f, 0.10f, 0.0012f, 0.90f, 1.60f },
+  /* rateRoll   */ { 0.85f, 0.10f, 0.0012f, 0.90f, 1.60f },
+  /* ratePitch  */ { 0.85f, 0.10f, 0.0012f, 0.90f, 1.60f },
   /* rateYaw    */ { 0.08f, 0.05f, 0.0000f, 0.40f, 0.80f },
 
   /* corrRampFullAtThr */ 0.06f
 };
 
 
-static constexpr float MOTOR_ROLL_TRIM = -0.30f;
+static constexpr float MOTOR_ROLL_TRIM = -0.00f;
